@@ -1,16 +1,12 @@
 <template>
-  <tableTest/>
+  <div><router-view /></div>
 </template>
 
 <script>
-import tableTest from './components/tableTest.vue'
-
 export default {
-  name: 'App',
-  components: {
-    tableTest
-  }
-}
+  name: "App",
+  components: {},
+};
 </script>
 
 <style>
