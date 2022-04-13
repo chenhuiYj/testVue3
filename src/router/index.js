@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory } from "vue-router";
 const home = () => import("../page/tableTest")
 const game = () => import("../page/game1")
+const answerSheet = () => import("../page/answerSheet")
 
 const routes = [
     { path: "/", redirect: "/home" },
@@ -13,6 +14,11 @@ const routes = [
         path: "/game",
         name: "game",
         component: game
+    },
+    {
+        path: "/answer-sheet",
+        name: "answerSheet",
+        component: answerSheet
     }
 ]
 
