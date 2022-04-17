@@ -3,27 +3,40 @@
   <div class="mian">
     <div class="button-number main-box">
       <div class="number-box">
-        <button>1</button>
-        <button>2</button>
-        <button>3</button>
-        <button>4</button>
+        <button v-for="(item, index) in questionList" :key="item.id">
+          {{ index + 1 }}
+        </button>
       </div>
       <div class="button-box">
         <button>添加选择题</button>
         <button>添加填空题</button>
-        <button>添加简答题</button>
         <button>添加问答题</button>
       </div>
     </div>
     <div class="question-info main-box">
-      <div class="question-title">1.下面哪个是正确答案</div>
-      <div class="answer-list">
-        <ul>
-          <li>A:1</li>
-          <li>B:2</li>
-          <li>C:3</li>
-          <li>D:4</li>
-        </ul>
+      <div
+        v-for="(item, index) in questionList"
+        :key="item.id"
+        class="question-box"
+      >
+        <div class="question-title">{{ index + 1 }}.{{ item.content }}</div>
+        <div class="answer-list" v-if="item.type === 'choose'">
+          <ol type="A">
+            <li v-for="answer in item.answerList" :key="answer">
+              {{ answer }}
+            </li>
+          </ol>
+        </div>
+        <div class="answer-list" v-if="item.type === 'fill'">
+          <ul type="A">
+            <li v-for="grace in item.grace" :key="grace">
+              <input />
+            </li>
+          </ul>
+        </div>
+        <div class="answer-list" v-if="item.type === 'ask'">
+          <textarea />
+        </div>
       </div>
     </div>
     <div class="button-other main-box">
@@ -41,7 +54,47 @@
 export default {
   name: "AnswerSheet",
   data() {
-    return {};
+    return {
+      questionList: [
+        {
+          id: 1,
+          content: "这道题该选什么？",
+          type: "choose",
+          answer: "A",
+          answerList: ["选择A", "选择B", "选择C", "选择D"],
+          grace: 5,
+        },
+        {
+          id: 2,
+          content: "这道题该选什么？",
+          type: "choose",
+          answer: "A,B",
+          answerList: ["选择A", "选择B", "选择C", "选择D"],
+          grace: 5,
+        },
+        {
+          id: 3,
+          content: "这是一道填空题，首先是___，然后是___",
+          type: "fill",
+          answer: "A/*/B",
+          grace: [2, 3],
+        },
+        {
+          id: 4,
+          content: "这是一道简单题",
+          type: "fill",
+          answer: "A",
+          grace: [5],
+        },
+        {
+          id: 5,
+          content: "这是一道问答题",
+          type: "ask",
+          answer: "",
+          grace: 15,
+        },
+      ],
+    };
   },
   beforeMount() {},
 };
@@ -71,5 +124,8 @@ export default {
 .question-info {
   width: 800px;
   margin: 0 20px;
+}
+.question-box {
+  margin-bottom: 20px;
 }
 </style>
