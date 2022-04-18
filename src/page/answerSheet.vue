@@ -3,73 +3,96 @@
   <div class="mian">
     <div class="button-number main-box">
       <div class="number-box">
-        <button
+        <el-button
           v-for="(item, index) in questionList"
           :key="item.id"
           @click="handleSelect(item, index)"
+          style="width: 30px; height: 30px"
+          :type="index === curIndex ? 'primary' : ''"
         >
           {{ index + 1 }}
-        </button>
+        </el-button>
       </div>
       <div class="button-box">
-        <button @click="hanldeAddQuestion('choose')">添加选择题</button>
-        <button @click="hanldeAddQuestion('fill')">添加填空题</button>
-        <button @click="hanldeAddQuestion('ask')">添加问答题</button>
+        <p>
+          <el-button @click="hanldeAddQuestion('choose')">添加选择题</el-button>
+        </p>
+        <p>
+          <el-button @click="hanldeAddQuestion('fill')">添加填空题</el-button>
+        </p>
+        <p>
+          <el-button @click="hanldeAddQuestion('ask')">添加问答题</el-button>
+        </p>
       </div>
     </div>
     <div class="question-info main-box" v-if="curQuestion.id">
       <div class="question-box">
         <div class="question-title">
-          {{ curIndex + 1 }}.<input v-model="curQuestion.content" />
+          <el-input
+            v-model="curQuestion.content"
+            placeholder="请输入题目内容"
+            type="textarea"
+          />
         </div>
         <div class="answer-list" v-if="curQuestion.type === 'choose'">
           <ol type="A">
             <li v-for="(answer, index) in curQuestion.answerList" :key="index">
-              {{ numberMap[index] }}.
-              <input v-model="curQuestion.answerList[index]" />
+              <el-input
+                v-model="curQuestion.answerList[index]"
+                placeholder="请输入选项内容"
+              >
+                <template #prepend>{{ numberMap[index] }}.</template>
+              </el-input>
             </li>
-            <button @click="hanldeAddAnswer">添加选项</button>
           </ol>
+          <el-button @click="hanldeAddAnswer" type="primary">
+            添加选项
+          </el-button>
         </div>
         <div class="answer-list" v-if="curQuestion.type === 'fill'">
-          <ul type="A">
+          <ul>
             <li v-for="grace in curQuestion.grace" :key="grace">
-              <input />
+              <el-input />
             </li>
           </ul>
         </div>
         <div class="answer-list" v-if="curQuestion.type === 'ask'">
-          <textarea />
+          <el-input type="textarea" />
         </div>
       </div>
     </div>
     <div class="button-other main-box" v-if="curQuestion.id">
       <ul>
-        <li>分值: <input v-model="curQuestion.grace" />分</li>
+        <li>
+          分值:
+          <el-input
+            v-model="curQuestion.answerList[index]"
+            placeholder="请输入分值"
+            type="number"
+            style="width: 100px"
+          ></el-input>
+        </li>
         <li>
           正确答案:
-          <span
-            class="answer-item"
-            v-for="item in curQuestion.answerList"
-            :key="item"
-          >
-            <input
-              type="checkbox"
-              :value="item"
-              @change="handleSelectAnswer"
-            />{{ item }}
-          </span>
+
+          <el-checkbox-group v-model="curQuestion.answer">
+            <el-checkbox
+              :label="item"
+              v-for="item in curQuestion.answerList"
+              :key="item"
+            />
+          </el-checkbox-group>
         </li>
         <li>
           序号:
-          <select>
-            <option v-for="(item, index) in questionList" :key="item">
+          <el-select style="width: 100px">
+            <el-option v-for="(item, index) in questionList" :key="item">
               {{ index + 1 }}
-            </option>
-          </select>
+            </el-option>
+          </el-select>
         </li>
       </ul>
-      <button @click="handleSave">保存</button>
+      <el-button @click="handleSave">保存</el-button>
     </div>
   </div>
 </template>
@@ -206,6 +229,25 @@ export default {
       height: 20px;
       margin: 0 5px 5px 0;
     }
+  }
+}
+.button-other {
+  width: 200px;
+  li {
+    margin-bottom: 10px;
+  }
+}
+.answer-list {
+  li {
+    &:last-child {
+      margin-bottom: 10px;
+    }
+    margin-top: 10px;
+  }
+}
+.button-box {
+  p {
+    margin-bottom: 10px;
   }
 }
 .question-info {
