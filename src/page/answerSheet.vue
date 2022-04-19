@@ -21,6 +21,9 @@
           <el-button @click="hanldeAddQuestion('fill')">添加填空题</el-button>
         </p>
         <p>
+          <el-button @click="hanldeAddQuestion('check')">添加判断题</el-button>
+        </p>
+        <p>
           <el-button @click="hanldeAddQuestion('ask')">添加问答题</el-button>
         </p>
       </div>
@@ -41,11 +44,21 @@
                 v-model="curQuestion.answerList[index]"
                 placeholder="请输入选项内容"
               >
-                <template #prepend>{{ numberMap[index] }}.</template>
+                <template #prepend>{{ numberMap[index] }}</template>
               </el-input>
+              <el-button
+                v-if="curQuestion.answerList.length > 2"
+                :icon="Delete"
+                @click="hanldleDeleteAnswer(index)"
+                style="margin-left: 10px"
+              />
             </li>
           </ol>
-          <el-button @click="hanldeAddAnswer" type="primary">
+          <el-button
+            @click="hanldeAddAnswer"
+            type="primary"
+            style="margin-top: 10px"
+          >
             添加选项
           </el-button>
         </div>
@@ -92,16 +105,19 @@
           </el-select>
         </li>
       </ul>
+      <el-button @click="handleDelete" type="danger">删除</el-button>
       <el-button @click="handleSave">保存</el-button>
     </div>
   </div>
 </template>
 
 <script>
+import { Delete } from "@element-plus/icons-vue";
 export default {
   name: "AnswerSheet",
   data() {
     return {
+      Delete,
       questionAttr: {
         type: "question", //question：逐一填写，list：全部一起填写
         realTimeGrace: true, //是否实时显示分数
@@ -152,7 +168,7 @@ export default {
             content: "",
             type: "choose",
             answer: [],
-            answerList: [],
+            answerList: ["", ""],
             graceMapAnswer: [], //答对部分选项对应分数
             grace: 0,
           };
@@ -178,14 +194,24 @@ export default {
           break;
       }
       this.questionList.push(obj);
+      this.curQuestion = obj;
+      this.curIndex = this.questionList.length - 1;
     },
     handleSelect(item, index) {
       let _item = JSON.parse(JSON.stringify(item));
       this.curQuestion = _item;
       this.curIndex = index;
     },
+    hanldleDeleteAnswer(index) {
+      this.curQuestion.answerList.splice(index, 1);
+    },
     hanldeAddAnswer() {
       this.curQuestion.answerList.push("");
+    },
+    handleDelete() {
+      this.questionList.splice(this.curIndex, 1);
+      this.curQuestion = {};
+      this.curIndex = null;
     },
     handleSave() {
       debugger;
@@ -239,9 +265,7 @@ export default {
 }
 .answer-list {
   li {
-    &:last-child {
-      margin-bottom: 10px;
-    }
+    display: flex;
     margin-top: 10px;
   }
 }
