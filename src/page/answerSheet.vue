@@ -44,7 +44,20 @@
                 v-model="curQuestion.answerList[index]"
                 placeholder="请输入选项内容"
               >
-                <template #prepend>{{ numberMap[index] }}</template>
+                <template #prepend
+                  ><el-button
+                    @click="handleSelectAnswer(answer)"
+                    :class="`input-button ' 
+                      ${
+                        answer && curQuestion.answer.indexOf(answer) !== -1
+                          ? 'has-check'
+                          : ''
+                      }
+                    `"
+                  >
+                    {{ numberMap[index] }}
+                  </el-button></template
+                >
               </el-input>
               <el-button
                 v-if="curQuestion.answerList.length > 2"
@@ -77,29 +90,41 @@
     <div class="button-other main-box" v-if="curQuestion.id">
       <ul>
         <li>
-          分值:
+          总分值:
           <el-input
-            v-model="curQuestion.answerList[index]"
+            v-model="curQuestion.grace"
             placeholder="请输入分值"
             type="number"
             style="width: 100px"
           ></el-input>
         </li>
-        <li>
-          正确答案:
 
-          <el-checkbox-group v-model="curQuestion.answer">
-            <el-checkbox
-              :label="item"
-              v-for="item in curQuestion.answerList"
-              :key="item"
-            />
-          </el-checkbox-group>
+        <li>
+          可选答案个数:
+          <el-input
+            v-model="curQuestion.answerSum"
+            type="number"
+            style="width: 100px"
+          ></el-input>
+        </li>
+        <li v-for="(item, index) in curQuestion.answer" :key="item">
+          <div v-if="index !== curQuestion.answer.length - 1">
+            答对{{ index + 1 }}个选项分数：
+            <el-input
+              v-model="curQuestion.graceMapAnswer[index]"
+              type="number"
+              style="width: 100px"
+            ></el-input>
+          </div>
         </li>
         <li>
           序号:
           <el-select style="width: 100px">
-            <el-option v-for="(item, index) in questionList" :key="item">
+            <el-option
+              v-for="(item, index) in questionList"
+              :key="item"
+              :value="index"
+            >
               {{ index + 1 }}
             </el-option>
           </el-select>
@@ -169,6 +194,7 @@ export default {
             type: "choose",
             answer: [],
             answerList: ["", ""],
+            answerSum: "", //可选答案个数
             graceMapAnswer: [], //答对部分选项对应分数
             grace: 0,
           };
@@ -217,17 +243,15 @@ export default {
       debugger;
       //调整答案顺序
       let _answer = this.curQuestion.answerList.filter(
-        (item) => this.curQuestion.answer.indexOf(item) !== -1
+        (item) => item && this.curQuestion.answer.indexOf(item) !== -1
       );
       this.curQuestion.answer = _answer;
       this.questionList[this.curIndex] = this.curQuestion;
     },
-    handleSelectAnswer(e) {
-      let _index = this.curQuestion.answerList.findIndex(
-        (item) => item === e.target.value
-      );
-      if (e.target.checked) {
-        this.curQuestion.answer.push(e.target.value);
+    handleSelectAnswer(answer) {
+      let _index = this.curQuestion.answer.indexOf(answer);
+      if (_index === -1) {
+        this.curQuestion.answer.push(answer);
       } else {
         this.curQuestion.answer.splice(_index, 1);
       }
@@ -258,7 +282,7 @@ export default {
   }
 }
 .button-other {
-  width: 200px;
+  width: 300px;
   li {
     margin-bottom: 10px;
   }
@@ -267,6 +291,18 @@ export default {
   li {
     display: flex;
     margin-top: 10px;
+  }
+  .input-button {
+    outline: 0;
+    border-radius: 4px 0 0 4px;
+  }
+  .has-check {
+    background: var(--el-color-success);
+    color: #fff;
+    &:hover {
+      color: #fff;
+      background: var(--el-color-success-light-3);
+    }
   }
 }
 .button-box {
