@@ -66,11 +66,15 @@
                 style="margin-left: 10px"
               />
             </li>
+            <li v-if="checkAnswerListUnique">
+              <p class="error-msg">{{ getAnswerListError }}</p>
+            </li>
           </ol>
           <el-button
             @click="hanldeAddAnswer"
             type="primary"
             style="margin-top: 10px"
+            :disabled="checkAnswerList"
           >
             添加选项
           </el-button>
@@ -100,12 +104,8 @@
         </li>
 
         <li>
-          可选答案个数:
-          <el-input
-            v-model="curQuestion.answerSum"
-            type="number"
-            style="width: 100px"
-          ></el-input>
+          限制可选答案个数:
+          <el-switch v-model="curQuestion.answerSum" />
         </li>
         <li v-for="(item, index) in curQuestion.answer" :key="item">
           <div v-if="index !== curQuestion.answer.length - 1">
@@ -131,7 +131,13 @@
         </li>
       </ul>
       <el-button @click="handleDelete" type="danger">删除</el-button>
-      <el-button @click="handleSave">保存</el-button>
+      <el-button
+        @click="handleSave"
+        :disabled="
+          checkAnswerList || checkAnswerListUnique || !curQuestion.content
+        "
+        >保存</el-button
+      >
     </div>
   </div>
 </template>
@@ -182,6 +188,35 @@ export default {
     };
   },
   beforeMount() {},
+  computed: {
+    checkAnswerList() {
+      if (this.curQuestion.type !== "choose") {
+        return false;
+      }
+      return this.curQuestion.answerList.some((item) => !item.trim());
+    },
+    checkAnswerListUnique() {
+      if (this.curQuestion.type !== "choose") {
+        return false;
+      }
+      if (this.checkAnswerList) {
+        return false;
+      }
+      return (
+        [...new Set(this.curQuestion.answerList)].length !==
+        this.curQuestion.answerList.length
+      );
+    },
+    getAnswerListError() {
+      if (this.curQuestion.type !== "choose") {
+        return false;
+      }
+      if (this.checkAnswerListUnique) {
+        return "选项有重复内容";
+      }
+      return false;
+    },
+  },
   methods: {
     hanldeAddQuestion(type) {
       let obj = {};
@@ -194,9 +229,9 @@ export default {
             type: "choose",
             answer: [],
             answerList: ["", ""],
-            answerSum: "", //可选答案个数
+            answerSum: false, //可选答案个数
             graceMapAnswer: [], //答对部分选项对应分数
-            grace: 0,
+            grace: "",
           };
           break;
         case "fill":
@@ -206,7 +241,7 @@ export default {
             type: "fill",
             answer: [],
             graceMapAnswer: [], //每一处对应得分
-            grace: 5,
+            grace: "",
           };
           break;
         case "ask":
@@ -215,7 +250,7 @@ export default {
             content: "",
             type: "ask",
             answer: "",
-            grace: 5,
+            grace: "",
           };
           break;
       }
@@ -319,5 +354,8 @@ export default {
 }
 .answer-item {
   margin-right: 10px;
+}
+.error-msg {
+  color: #f00;
 }
 </style>
