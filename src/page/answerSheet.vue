@@ -35,10 +35,11 @@
             v-model="curQuestion.content"
             placeholder="请输入题目内容"
             type="textarea"
+            @change="handleContentChange"
           />
         </div>
         <div class="answer-list" v-if="curQuestion.type === 'choose'">
-          <ol type="A">
+          <ul>
             <li v-for="(answer, index) in curQuestion.answerList" :key="index">
               <el-input
                 v-model="curQuestion.answerList[index]"
@@ -69,7 +70,7 @@
             <li v-if="checkAnswerListUnique">
               <p class="error-msg">{{ getAnswerListError }}</p>
             </li>
-          </ol>
+          </ul>
           <el-button
             @click="hanldeAddAnswer"
             type="primary"
@@ -81,13 +82,16 @@
         </div>
         <div class="answer-list" v-if="curQuestion.type === 'fill'">
           <ul>
-            <li v-for="grace in curQuestion.grace" :key="grace">
-              <el-input />
+            <li v-for="item in curQuestion.answer" :key="item">
+              <el-input :value="item" disabled />
             </li>
           </ul>
         </div>
-        <div class="answer-list" v-if="curQuestion.type === 'ask'">
-          <el-input type="textarea" />
+        <div class="answer-list" v-if="curQuestion.type === 'check'">
+          <el-radio-group v-model="curQuestion.answer">
+            <el-radio label="正确">正确</el-radio>
+            <el-radio label="错误">错误</el-radio>
+          </el-radio-group>
         </div>
       </div>
     </div>
@@ -103,14 +107,37 @@
           ></el-input>
         </li>
 
-        <li>
+        <li v-if="curQuestion.type === 'choose'">
           限制可选答案个数:
-          <el-switch v-model="curQuestion.answerSum" />
+          <el-input
+            v-model="curQuestion.answerSum"
+            type="number"
+            :min="0"
+            :max="
+              curQuestion.answer.length === 0
+                ? curQuestion.answerList.length
+                : curQuestion.answer.length
+            "
+          />
         </li>
         <li v-for="(item, index) in curQuestion.answer" :key="item">
-          <div v-if="index !== curQuestion.answer.length - 1">
-            答对{{ index + 1 }}个选项分数：
+          <div
+            v-if="
+              (curQuestion.type === 'choose' &&
+                index !== curQuestion.answer.length - 1) ||
+              curQuestion.type !== 'choose'
+            "
+          >
+            {{
+              curQuestion.type === "choose"
+                ? `答对${index + 1}个选项分数：`
+                : ""
+            }}
+            {{ curQuestion.type === "fill" ? `第${index + 1}空得分` : "" }}
             <el-input
+              v-if="
+                curQuestion.type === 'fill' || curQuestion.type === 'choose'
+              "
               v-model="curQuestion.graceMapAnswer[index]"
               type="number"
               style="width: 100px"
@@ -134,7 +161,10 @@
       <el-button
         @click="handleSave"
         :disabled="
-          checkAnswerList || checkAnswerListUnique || !curQuestion.content
+          checkAnswerList ||
+          checkAnswerListUnique ||
+          checkAnswer ||
+          !curQuestion.content
         "
         >保存</el-button
       >
@@ -189,11 +219,23 @@ export default {
   },
   beforeMount() {},
   computed: {
+    getMapGraceTips() {
+      switch (this.curQuestion.type) {
+        case "choose":
+          "";
+      }
+    },
     checkAnswerList() {
       if (this.curQuestion.type !== "choose") {
         return false;
       }
       return this.curQuestion.answerList.some((item) => !item.trim());
+    },
+    checkAnswer() {
+      if (this.checkAnswerList) {
+        return false;
+      }
+      return this.curQuestion.answer.length === 0;
     },
     checkAnswerListUnique() {
       if (this.curQuestion.type !== "choose") {
@@ -216,20 +258,29 @@ export default {
       }
       return false;
     },
+    getFillAnswer() {
+      if (this.curQuestion.type !== "fill") {
+        return;
+      }
+      if (this.checkAnswerListUnique) {
+        return "选项有重复内容";
+      }
+      return false;
+    },
   },
   methods: {
     hanldeAddQuestion(type) {
       let obj = {};
-      let id = this.questionList.length + 1;
+      let id = Math.random().toString(10).substring(2);
       switch (type) {
         case "choose":
           obj = {
             id,
             content: "",
-            type: "choose",
+            type,
             answer: [],
             answerList: ["", ""],
-            answerSum: false, //可选答案个数
+            answerSum: null, //可选答案个数
             graceMapAnswer: [], //答对部分选项对应分数
             grace: "",
           };
@@ -238,7 +289,7 @@ export default {
           obj = {
             id,
             content: "",
-            type: "fill",
+            type,
             answer: [],
             graceMapAnswer: [], //每一处对应得分
             grace: "",
@@ -248,7 +299,16 @@ export default {
           obj = {
             id,
             content: "",
-            type: "ask",
+            type,
+            answer: "",
+            grace: "",
+          };
+          break;
+        case "check":
+          obj = {
+            id,
+            content: "",
+            type,
             answer: "",
             grace: "",
           };
@@ -276,11 +336,14 @@ export default {
     },
     handleSave() {
       debugger;
-      //调整答案顺序
-      let _answer = this.curQuestion.answerList.filter(
-        (item) => item && this.curQuestion.answer.indexOf(item) !== -1
-      );
-      this.curQuestion.answer = _answer;
+      //选择题调整答案顺序
+      if (this.curQuestion.type === "choose") {
+        let _answer = this.curQuestion.answerList.filter(
+          (item) => item && this.curQuestion.answer.indexOf(item) !== -1
+        );
+        this.curQuestion.answer = _answer;
+      }
+
       this.questionList[this.curIndex] = this.curQuestion;
     },
     handleSelectAnswer(answer) {
@@ -289,7 +352,18 @@ export default {
         this.curQuestion.answer.push(answer);
       } else {
         this.curQuestion.answer.splice(_index, 1);
+        if (this.curQuestion.answerSum > this.curQuestion.answer.length) {
+          this.curQuestion.answerSum = this.curQuestion.answer.length;
+        }
       }
+    },
+    handleContentChange() {
+      if (this.curQuestion.type !== "fill") {
+        return;
+      }
+      this.curQuestion.answer = this.curQuestion.content
+        .match(/\{--(.+?)--\}/g)
+        .map((item) => item.replace("{--", "").replace("--}", ""));
     },
   },
 };
