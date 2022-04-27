@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory } from "vue-router";
 const home = () => import("../page/tableTest")
 const game = () => import("../page/game1")
-const answerSheet = () => import("../page/answerSheet")
+const answerSheet = () => import("../page/answerSheet/index")
 
 const routes = [
     { path: "/", redirect: "/home" },
