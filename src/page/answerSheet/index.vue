@@ -28,157 +28,23 @@
         </p>
       </div>
     </div>
-    <div class="question-info main-box" v-if="curQuestion.id">
-      <div class="question-box">
-        <div class="question-title">
-          <el-input
-            v-model="curQuestion.content"
-            placeholder="请输入题目内容"
-            type="textarea"
-            @change="handleContentChange"
-          />
-        </div>
-        <div class="answer-list" v-if="curQuestion.type === 'choose'">
-          <ul>
-            <li v-for="(answer, index) in curQuestion.answerList" :key="index">
-              <el-input
-                v-model="curQuestion.answerList[index]"
-                placeholder="请输入选项内容"
-              >
-                <template #prepend
-                  ><el-button
-                    @click="handleSelectAnswer(answer)"
-                    :class="`input-button ' 
-                      ${
-                        answer && curQuestion.answer.indexOf(answer) !== -1
-                          ? 'has-check'
-                          : ''
-                      }
-                    `"
-                  >
-                    {{ numberMap[index] }}
-                  </el-button></template
-                >
-              </el-input>
-              <el-button
-                v-if="curQuestion.answerList.length > 2"
-                :icon="Delete"
-                @click="hanldleDeleteAnswer(index)"
-                style="margin-left: 10px"
-              />
-            </li>
-            <li v-if="checkAnswerListUnique">
-              <p class="error-msg">{{ getAnswerListError }}</p>
-            </li>
-          </ul>
-          <el-button
-            @click="hanldeAddAnswer"
-            type="primary"
-            style="margin-top: 10px"
-            :disabled="checkAnswerList"
-          >
-            添加选项
-          </el-button>
-        </div>
-        <div class="answer-list" v-if="curQuestion.type === 'fill'">
-          <ul>
-            <li v-for="item in curQuestion.answer" :key="item">
-              <el-input :value="item" disabled />
-            </li>
-          </ul>
-        </div>
-        <div class="answer-list" v-if="curQuestion.type === 'check'">
-          <el-radio-group v-model="curQuestion.answer">
-            <el-radio label="正确">正确</el-radio>
-            <el-radio label="错误">错误</el-radio>
-          </el-radio-group>
-        </div>
-      </div>
-    </div>
-    <div class="button-other main-box" v-if="curQuestion.id">
-      <ul>
-        <li>
-          总分值:
-          <el-input
-            v-model="curQuestion.grace"
-            placeholder="请输入分值"
-            type="number"
-            style="width: 100px"
-          ></el-input>
-        </li>
-
-        <li v-if="curQuestion.type === 'choose'">
-          限制可选答案个数:
-          <el-input
-            v-model="curQuestion.answerSum"
-            type="number"
-            :min="0"
-            :max="
-              curQuestion.answer.length === 0
-                ? curQuestion.answerList.length
-                : curQuestion.answer.length
-            "
-          />
-        </li>
-        <li v-for="(item, index) in curQuestion.answer" :key="item">
-          <div
-            v-if="
-              (curQuestion.type === 'choose' &&
-                index !== curQuestion.answer.length - 1) ||
-              curQuestion.type !== 'choose'
-            "
-          >
-            {{
-              curQuestion.type === "choose"
-                ? `答对${index + 1}个选项分数：`
-                : ""
-            }}
-            {{ curQuestion.type === "fill" ? `第${index + 1}空得分` : "" }}
-            <el-input
-              v-if="
-                curQuestion.type === 'fill' || curQuestion.type === 'choose'
-              "
-              v-model="curQuestion.graceMapAnswer[index]"
-              type="number"
-              style="width: 100px"
-            ></el-input>
-          </div>
-        </li>
-        <li>
-          序号:
-          <el-select style="width: 100px">
-            <el-option
-              v-for="(item, index) in questionList"
-              :key="item"
-              :value="index"
-            >
-              {{ index + 1 }}
-            </el-option>
-          </el-select>
-        </li>
-      </ul>
-      <el-button @click="handleDelete" type="danger">删除</el-button>
-      <el-button
-        @click="handleSave"
-        :disabled="
-          checkAnswerList ||
-          checkAnswerListUnique ||
-          checkAnswer ||
-          !curQuestion.content
-        "
-        >保存</el-button
-      >
-    </div>
+    <ChooseQuestion
+      v-if="curQuestion.id && curQuestion.type === 'choose'"
+      :sourceData="curQuestion"
+      @save="handleSave"
+      @delete="handleDelete"
+    />
   </div>
 </template>
 
 <script>
-import { Delete } from "@element-plus/icons-vue";
+import ChooseQuestion from "./components/choose";
 export default {
   name: "AnswerSheet",
+  components: { ChooseQuestion },
   data() {
     return {
-      Delete,
+      test: 1,
       questionAttr: {
         type: "question", //question：逐一填写，list：全部一起填写
         realTimeGrace: true, //是否实时显示分数
@@ -187,34 +53,6 @@ export default {
       questionList: [],
       curQuestion: {},
       curIndex: null,
-      numberMap: [
-        "A",
-        "B",
-        "C",
-        "D",
-        "E",
-        "F",
-        "G",
-        "H",
-        "I",
-        "J",
-        "K",
-        "L",
-        "M",
-        "N",
-        "O",
-        "P",
-        "Q",
-        "R",
-        "S",
-        "T",
-        "U",
-        "V",
-        "W",
-        "X",
-        "Y",
-        "Z",
-      ],
     };
   },
   beforeMount() {},
@@ -282,6 +120,11 @@ export default {
             answerList: ["", ""],
             answerSum: null, //可选答案个数
             graceMapAnswer: [], //答对部分选项对应分数
+            conditionTigger: {
+              qId: "", //题目ID
+              tigger: "", //触发条件  1-已答题 2-未答题 3-答错  4-答对 5-不全对
+              status: "", //当前题目状态 1-必答题 2-非必答题 3-隐藏
+            },
             grace: "",
           };
           break;
@@ -334,17 +177,8 @@ export default {
       this.curQuestion = {};
       this.curIndex = null;
     },
-    handleSave() {
-      debugger;
-      //选择题调整答案顺序
-      if (this.curQuestion.type === "choose") {
-        let _answer = this.curQuestion.answerList.filter(
-          (item) => item && this.curQuestion.answer.indexOf(item) !== -1
-        );
-        this.curQuestion.answer = _answer;
-      }
-
-      this.questionList[this.curIndex] = this.curQuestion;
+    handleSave(val) {
+      this.questionList[this.curIndex] = val;
     },
     handleSelectAnswer(answer) {
       let _index = this.curQuestion.answer.indexOf(answer);
