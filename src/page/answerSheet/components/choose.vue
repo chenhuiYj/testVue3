@@ -88,6 +88,19 @@
           ></el-input>
         </div>
       </li>
+      <li>
+        设置条件:
+        <el-select
+          v-model="sourceData.answerSum"
+          type="number"
+          :min="0"
+          :max="
+            sourceData.answer.length === 0
+              ? sourceData.answerList.length
+              : sourceData.answer.length
+          "
+        />
+      </li>
     </ul>
     <el-button @click="handleDelete" type="danger">删除</el-button>
     <el-button
@@ -132,15 +145,12 @@ const numberMap = reactive([
   "Z",
 ]);
 const emits = defineEmits(["save", "delete"]);
-debugger;
 let sourceData = ref(props.sourceData);
 
 watch(
   () => props.sourceData,
   (val) => {
-    debugger;
     sourceData.value = val;
-    console.log(props.sourceData, sourceData);
   },
   { immediate: true, deep: true }
 );
